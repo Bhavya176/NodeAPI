@@ -2,7 +2,8 @@ const asyncHandler = require("express-async-handler");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../models/userModel");
-
+var fs = require("fs");
+var path = require("path");
 //@desc Register a user
 //@route POST /api/users/register
 //@access public
@@ -21,10 +22,17 @@ const registerUser = asyncHandler(async (req, res) => {
   //Hash password
   const hashedPassword = await bcrypt.hash(password, 10);
   console.log("Hashed Password: ", hashedPassword);
+  const imgData = req.file
+    ? {
+        data: fs.readFileSync(path.join("./uploads/" + req.file.filename)),
+        contentType: "image/png",
+      }
+    : null;
   const user = await User.create({
     username,
     email,
     password: hashedPassword,
+    img: imgData,
   });
 
   console.log(`User created ${user}`);
@@ -55,6 +63,7 @@ const loginUser = asyncHandler(async (req, res) => {
           username: user.username,
           email: user.email,
           id: user.id,
+          img: user.img,
         },
       },
       process.env.ACCESS_TOKEN_SECERT,
