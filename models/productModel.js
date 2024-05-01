@@ -1,33 +1,46 @@
 const mongoose = require('mongoose');
-const Schmea = mongoose.Schema;
+const Schema = mongoose.Schema;
 
-const ProductModel = new Schmea(
-    {
-        productName: {
-            type: String,
-            required: true
-        },
-        description: {
-            type: String,
-            required: false
-        },
-        price: {
+const ProductSchema = new Schema({
+
+    title: {
+        type: String,
+        required: true
+    },
+    price: {
+        type: Number,
+        required: true
+    },
+    description: {
+        type: String,
+        required: false
+    },
+    category: {
+        type: String,
+        required: true
+    },
+    image: {
+        type: String,
+        required: true
+    },
+    rating: {
+        rate: {
             type: Number,
             required: true
         },
-        availableStock: {
+        count: {
             type: Number,
             required: true
-        },
-        createdAt: {
-            type: Date,
-            default: Date.now()
-        },
-        updatedAt: {
-            type: Date,
-            default: Date.now()
         }
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now()
+    },
+    updatedAt: {
+        type: Date,
+        default: Date.now()
     }
-)
+});
 
-module.exports = mongoose.model('products', ProductModel);
+module.exports = mongoose.model('Product', ProductSchema);

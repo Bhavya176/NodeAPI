@@ -4,11 +4,13 @@ const errorHandler = require("./middleware/errorHandler");
 const dotenv = require("dotenv").config();
 const Message = require("./models/messageModel");
 const socketIo = require("socket.io");
+const productRoutes = require("./routes/productRoutes");
 const http = require("http");
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
-const productRoutes = require("./routes/productRoutes");
+const cors = require("cors");
+app.use(cors());
 connectDb();
 app.set("view engine", "ejs");
 
@@ -29,13 +31,13 @@ app.get("/about", (req, res) => {
 app.get("/message", (req, res) => {
   res.render("message");
 });
-app.delete('/delete-all-chats', async (req, res) => {
+app.delete("/delete-all-chats", async (req, res) => {
   try {
-      await Message.deleteMany({}); // Delete all documents from Message collection
-      res.status(200).json({ message: 'All chats deleted successfully.' });
+    await Message.deleteMany({}); // Delete all documents from Message collection
+    res.status(200).json({ message: "All chats deleted successfully." });
   } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Failed to delete chats.' });
+    console.error(error);
+    res.status(500).json({ message: "Failed to delete chats." });
   }
 });
 app.use(express.json());

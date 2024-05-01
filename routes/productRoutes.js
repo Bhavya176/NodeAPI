@@ -12,7 +12,7 @@ const router = require("express").Router();
 router.post("/", validateToken, createProduct); //secure
 router.get("/", getProducts);
 router.get("/:id", getProductById);
-router.put("/:id", validateToken, updateProductById); //secure
-router.delete("/:id", validateToken, deleteById); //secure
+router.put("/:id", updateProductById); //secure
+router.delete("/:id", deleteById); //secure
 
 module.exports = router;

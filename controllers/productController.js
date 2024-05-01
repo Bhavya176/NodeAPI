@@ -6,7 +6,7 @@ const createProduct = async (req, res) => {
   try {
     const product = new Product(body);
     const result = await product.save();
-    res.status(201).json({ message: "created", result });
+    res.status(201).json({ message:"Data Added Successfully", result });
   } catch (err) {
     res.status(500).json({ message: "Internal server error" });
   }

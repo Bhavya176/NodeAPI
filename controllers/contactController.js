@@ -13,8 +13,8 @@ const getContacts = asyncHandler(async (req, res) => {
 //@access private
 const createContact = asyncHandler(async (req, res) => {
   console.log("The request body is :", req.body);
-  const { name, email, phone } = req.body;
-  if (!name || !email || !phone) {
+  const { name, email, phone, message } = req.body;
+  if (!name || !email || !phone || !message) {
     res.status(400);
     throw new Error("All fields are mandatory !");
   }
@@ -22,10 +22,9 @@ const createContact = asyncHandler(async (req, res) => {
     name,
     email,
     phone,
-    user_id: req.user.id,
+    message,
   });
-
-  res.status(201).json(contact);
+  res.status(201).json({ contact, message: "Contact Added Successfully" });
 });
 
 //@desc Get contact

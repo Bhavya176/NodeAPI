@@ -37,7 +37,13 @@ const registerUser = asyncHandler(async (req, res) => {
 
   console.log(`User created ${user}`);
   if (user) {
-    res.status(201).json({ _id: user.id, email: user.email });
+    res
+      .status(201)
+      .json({
+        _id: user.id,
+        email: user.email,
+        message: "User Registered Successfully",
+      });
   } else {
     res.status(400);
     throw new Error("User data is not valid");
@@ -57,6 +63,12 @@ const loginUser = asyncHandler(async (req, res) => {
   const user = await User.findOne({ email });
   //compare password with hashedpassword
   if (user && (await bcrypt.compare(password, user.password))) {
+    const userInfo = {
+      username: user.username,
+      email: user.email,
+      id: user.id,
+      img: user.img,
+    };
     const accessToken = jwt.sign(
       {
         user: {
@@ -69,7 +81,9 @@ const loginUser = asyncHandler(async (req, res) => {
       process.env.ACCESS_TOKEN_SECERT,
       { expiresIn: "15m" }
     );
-    res.status(200).json({ accessToken });
+    res
+      .status(200)
+      .json({ accessToken, userInfo, message: "User Login Successfully" });
   } else {
     res.status(401);
     throw new Error("email or password is not valid");
