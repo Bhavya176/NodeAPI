@@ -11,6 +11,7 @@ const server = http.createServer(app);
 const io = socketIo(server);
 const cors = require("cors");
 app.use(cors());
+const stripe = require("stripe")(process.env.STRIPE_SECRET);
 connectDb();
 app.set("view engine", "ejs");
 
@@ -45,6 +46,34 @@ app.use("/products", productRoutes);
 app.use("/contacts", require("./routes/contactRoutes"));
 app.use("/users", require("./routes/userRoutes"));
 app.use(errorHandler);
+
+app.post("/create-checkout-session", async (req, res) => {
+  const { products, customer } = req.body;
+  console.log("products", products);
+  const lineItems = products.map((product) => ({
+    price_data: {
+      currency: "usd",
+      product_data: {
+        name: product.title,
+        images: [product.image],
+      },
+      unit_amount: product.price * 100,
+    },
+    quantity: product.qty,
+  }));
+  console.log("lineItems", lineItems);
+  const session = await stripe.checkout.sessions.create({
+    payment_method_types: ["card"],
+    line_items: lineItems,
+    mode: "payment",
+
+    success_url: process.env.CLIENT_URL,
+    cancel_url: process.env.CLIENT_URL + "cart",
+  });
+
+  res.json({ id: session.id });
+});
+
 io.on("connection", (socket) => {
   console.log("A user connected");
 
