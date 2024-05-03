@@ -49,7 +49,6 @@ app.use(errorHandler);
 
 app.post("/create-checkout-session", async (req, res) => {
   const { products, customer } = req.body;
-  console.log("products", products);
   const lineItems = products.map((product) => ({
     price_data: {
       currency: "usd",
@@ -61,12 +60,12 @@ app.post("/create-checkout-session", async (req, res) => {
     },
     quantity: product.qty,
   }));
-  console.log("lineItems", lineItems);
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ["card"],
     line_items: lineItems,
     mode: "payment",
 
+    customer_email: customer.email,
     success_url: process.env.CLIENT_URL,
     cancel_url: process.env.CLIENT_URL + "cart",
   });
