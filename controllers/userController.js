@@ -23,16 +23,18 @@ const registerUser = asyncHandler(async (req, res) => {
   const hashedPassword = await bcrypt.hash(password, 10);
   console.log("Hashed Password: ", hashedPassword);
   const imgData = req.file
-    ? {
-        data: fs.readFileSync(path.join("./uploads/" + req.file.filename)),
-        contentType: "image/png",
-      }
-    : null;
+  ? {
+      data: fs.readFileSync(path.join("./uploads/" + req.file.filename)),
+      contentType: "image/png",
+    }
+  : null; // Set to undefined when no file is uploaded
+
   const user = await User.create({
     username,
     email,
     password: hashedPassword,
     img: imgData,
+    role:"user"
   });
 
   console.log(`User created ${user}`);
@@ -68,6 +70,7 @@ const loginUser = asyncHandler(async (req, res) => {
       email: user.email,
       id: user.id,
       img: user.img,
+      role: user.role
     };
     const accessToken = jwt.sign(
       {
@@ -76,6 +79,7 @@ const loginUser = asyncHandler(async (req, res) => {
           email: user.email,
           id: user.id,
           img: user.img,
+          role: user.role
         },
       },
       process.env.ACCESS_TOKEN_SECERT,

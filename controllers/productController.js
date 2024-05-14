@@ -2,12 +2,14 @@ const Product = require("../models/productModel");
 
 const createProduct = async (req, res) => {
   const body = req.body;
+  // console.log("req ", req);
   console.log("userInfo ", req.userInfo);
   try {
     const product = new Product(body);
     const result = await product.save();
-    res.status(201).json({ message:"Data Added Successfully", result });
+    res.status(201).json({ message: "Data Added Successfully", result });
   } catch (err) {
+    console.log(err);
     res.status(500).json({ message: "Internal server error" });
   }
 };

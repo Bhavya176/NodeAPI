@@ -19,6 +19,7 @@ const userSchema = mongoose.Schema(
       data: Buffer,
       contentType: String,
     },
+    role: String,
   },
   {
     timestamps: true,
