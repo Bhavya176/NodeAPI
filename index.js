@@ -10,12 +10,7 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
 const cors = require("cors");
-const corsOptions = {
-  origin: process.env.CLIENT_URL, // Allow requests only from your frontend domain
-  methods: ["GET", "POST", "PUT", "DELETE"], // Allow these HTTP methods
-  optionsSuccessStatus: 200, // Some legacy browsers (IE11, various SmartTVs) choke on 204
-};
-
+app.use(cors());
 const stripe = require("stripe")(process.env.STRIPE_SECRET);
 connectDb();
 app.set("view engine", "ejs");
@@ -126,4 +121,3 @@ io.on("connection", (socket) => {
 server.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
-app.use(cors(corsOptions));
