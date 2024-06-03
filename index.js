@@ -3,18 +3,25 @@ const connectDb = require("./config/dbConnection");
 const errorHandler = require("./middleware/errorHandler");
 const dotenv = require("dotenv").config();
 const Message = require("./models/messageModel");
+const UserMessage = require("./models/userMessageModel");
 const socketIo = require("socket.io");
 const productRoutes = require("./routes/productRoutes");
 const http = require("http");
 const app = express();
-const server = http.createServer(app);
-const io = socketIo(server);
+// const server = http.createServer(app);
+// const io = socketIo(server);
 const cors = require("cors");
 app.use(cors());
 const stripe = require("stripe")(process.env.STRIPE_SECRET);
 connectDb();
 app.set("view engine", "ejs");
-
+const server = http.createServer(app);
+const io = socketIo(server, {
+  cors: {
+    origin: "http://localhost:3000", // Update with your frontend URL
+    methods: ["GET", "POST"],
+  },
+});
 const port = process.env.PORT || 5000;
 app.get("/", (req, res) => {
   // res.send("products api running new deploy");
@@ -29,9 +36,7 @@ app.get("/", (req, res) => {
 app.get("/about", (req, res) => {
   res.render("aboutPage");
 });
-app.get("/message", (req, res) => {
-  res.render("message");
-});
+
 app.delete("/delete-all-chats", async (req, res) => {
   try {
     await Message.deleteMany({}); // Delete all documents from Message collection
@@ -95,22 +100,55 @@ app.post("/api/create-checkout-session", async (req, res) => {
   res.json({ id: session.id });
 });
 
+// Message routes
+app.post("/messages", async (req, res) => {
+  const { sender, receiver, content } = req.body;
+  try {
+    const message = new UserMessage({ sender, receiver, content });
+    await message.save();
+    res.status(201).send(message);
+  } catch (error) {
+    res.status(400).send(error);
+  }
+});
+
+app.get("/messages/:userId", async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const messages = await UserMessage.find({
+      $or: [{ sender: userId }, { receiver: userId }],
+    }).populate("sender receiver");
+    res.status(200).send(messages);
+  } catch (error) {
+    res.status(400).send(error);
+  }
+});
+
 io.on("connection", (socket) => {
   console.log("A user connected");
 
   // Send previous messages to the client
-  Message.find({}, (err, messages) => {
-    if (err) console.error(err);
-    socket.emit("load messages", messages);
+  socket.on("load messages", async (userId) => {
+    try {
+      const messages = await UserMessage.find({
+        $or: [{ sender: userId }, { receiver: userId }],
+      }).populate("sender receiver");
+      socket.emit("load messages", messages);
+    } catch (err) {
+      console.error(err);
+    }
   });
 
   // Listen for new messages from the client
-  socket.on("send message", (data) => {
-    const newMessage = new Message({ user: data.user, message: data.message });
-    newMessage.save((err) => {
-      if (err) console.error(err);
-      io.emit("receive message", { user: data.user, message: data.message });
-    });
+  socket.on("send message", async (data) => {
+    const { sender, receiver, content } = data;
+    const newMessage = new UserMessage({ sender, receiver, content });
+    try {
+      await newMessage.save();
+      io.emit("receive message", { sender, receiver, content });
+    } catch (err) {
+      console.error(err);
+    }
   });
 
   // Handle disconnection
@@ -118,6 +156,7 @@ io.on("connection", (socket) => {
     console.log("User disconnected");
   });
 });
+
 server.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });

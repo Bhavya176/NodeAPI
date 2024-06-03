@@ -23,29 +23,27 @@ const registerUser = asyncHandler(async (req, res) => {
   const hashedPassword = await bcrypt.hash(password, 10);
   console.log("Hashed Password: ", hashedPassword);
   const imgData = req.file
-  ? {
-      data: fs.readFileSync(path.join("./uploads/" + req.file.filename)),
-      contentType: "image/png",
-    }
-  : null; // Set to undefined when no file is uploaded
+    ? {
+        data: fs.readFileSync(path.join("./uploads/" + req.file.filename)),
+        contentType: "image/png",
+      }
+    : null; // Set to undefined when no file is uploaded
 
   const user = await User.create({
     username,
     email,
     password: hashedPassword,
     img: imgData,
-    role:"user"
+    role: "user",
   });
 
   console.log(`User created ${user}`);
   if (user) {
-    res
-      .status(201)
-      .json({
-        _id: user.id,
-        email: user.email,
-        message: "User Registered Successfully",
-      });
+    res.status(201).json({
+      _id: user.id,
+      email: user.email,
+      message: "User Registered Successfully",
+    });
   } else {
     res.status(400);
     throw new Error("User data is not valid");
@@ -70,7 +68,7 @@ const loginUser = asyncHandler(async (req, res) => {
       email: user.email,
       id: user.id,
       img: user.img,
-      role: user.role
+      role: user.role,
     };
     const accessToken = jwt.sign(
       {
@@ -79,7 +77,7 @@ const loginUser = asyncHandler(async (req, res) => {
           email: user.email,
           id: user.id,
           img: user.img,
-          role: user.role
+          role: user.role,
         },
       },
       process.env.ACCESS_TOKEN_SECERT,
@@ -101,4 +99,23 @@ const currentUser = asyncHandler(async (req, res) => {
   res.json(req.user);
 });
 
-module.exports = { registerUser, loginUser, currentUser };
+const getUsers = async (req, res) => {
+  console.log("results");
+  try {
+    const results = await User.find({ role: "user" });
+    res.status(200).json({ message: "success", data: results });
+  } catch (err) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+const getAdmin = async (req, res) => {
+  console.log("results");
+  try {
+    const results = await User.find({ role: "admin" });
+    res.status(200).json({ message: "success", data: results });
+  } catch (err) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+module.exports = { registerUser, loginUser, currentUser, getUsers, getAdmin };

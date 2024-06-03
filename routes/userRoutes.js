@@ -3,6 +3,8 @@ const {
   registerUser,
   currentUser,
   loginUser,
+  getUsers,
+  getAdmin,
 } = require("../controllers/userController");
 const validateToken = require("../middleware/validateTokenHandler");
 
@@ -21,6 +23,8 @@ var upload = multer({ storage: storage });
 router.post("/register", upload.single("image"), registerUser);
 
 router.post("/login", loginUser);
+router.get("/getAdmin", getAdmin);
+router.get("/getUser", getUsers);
 
 router.get("/current", validateToken, currentUser);
 

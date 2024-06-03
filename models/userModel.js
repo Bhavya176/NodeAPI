@@ -4,6 +4,7 @@ const userSchema = mongoose.Schema(
   {
     username: {
       type: String,
+      unique: true,
       required: [true, "Please add the user name"],
     },
     email: {
@@ -19,7 +20,7 @@ const userSchema = mongoose.Schema(
       data: Buffer,
       contentType: String,
     },
-    role: String,
+    role: { type: String, enum: ["admin", "user"], required: true },
   },
   {
     timestamps: true,
