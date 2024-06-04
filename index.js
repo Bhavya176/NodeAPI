@@ -8,13 +8,11 @@ const socketIo = require("socket.io");
 const productRoutes = require("./routes/productRoutes");
 const http = require("http");
 const app = express();
-// const server = http.createServer(app);
-// const io = socketIo(server);
 const cors = require("cors");
 app.use(cors());
 const stripe = require("stripe")(process.env.STRIPE_SECRET);
 connectDb();
-app.set("view engine", "ejs");
+
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
@@ -24,22 +22,17 @@ const io = socketIo(server, {
 });
 const port = process.env.PORT || 5000;
 app.get("/", (req, res) => {
-  // res.send("products api running new deploy");
-  res.render("home");
+  res.send("products api running new deploy");
+  // res.render("home");
 });
-// app.get("/register", (req, res) => {
-//   res.render("registerPage");
-// });
-// app.get("/login", (req, res) => {
-//   res.render("loginPage");
-// });
+
 app.get("/about", (req, res) => {
-  res.render("aboutPage");
+  res.send("products api running new deploy");
 });
 
 app.delete("/delete-all-chats", async (req, res) => {
   try {
-    await Message.deleteMany({}); // Delete all documents from Message collection
+    await UserMessage.deleteMany({}); // Delete all documents from Message collection
     res.status(200).json({ message: "All chats deleted successfully." });
   } catch (error) {
     console.error(error);
