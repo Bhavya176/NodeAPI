@@ -21,6 +21,7 @@ const userSchema = mongoose.Schema(
       contentType: String,
     },
     role: { type: String, enum: ["admin", "user"], required: true },
+    deviceId: { type: String },
   },
   {
     timestamps: true,

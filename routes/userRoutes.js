@@ -5,6 +5,7 @@ const {
   loginUser,
   getUsers,
   getAdmin,
+  editUser,
 } = require("../controllers/userController");
 const validateToken = require("../middleware/validateTokenHandler");
 
@@ -25,7 +26,7 @@ router.post("/register", upload.single("image"), registerUser);
 router.post("/login", loginUser);
 router.get("/getAdmin", getAdmin);
 router.get("/getUser", getUsers);
-
+router.put("/users/:id", upload.single("img"), editUser);
 router.get("/current", validateToken, currentUser);
 
 module.exports = router;

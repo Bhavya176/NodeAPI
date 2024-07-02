@@ -16,7 +16,7 @@ connectDb();
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: "https://ecommerce-react-tau-nine.vercel.app", // Update with your frontend URL
+    origin: "*", // Update with your frontend URL
     methods: ["GET", "POST"],
   },
 });
