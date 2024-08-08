@@ -1,9 +1,9 @@
 const asyncHandler = require("express-async-handler");
-const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../models/userModel");
 var fs = require("fs");
 var path = require("path");
+
 //@desc Register a user
 //@route POST /api/users/register
 //@access public
@@ -19,20 +19,18 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new Error("User already registered!");
   }
 
-  //Hash password
-  const hashedPassword = await bcrypt.hash(password, 10);
-  console.log("Hashed Password: ", hashedPassword);
+  // Directly use the password without hashing
   const imgData = req.file
     ? {
         data: fs.readFileSync(path.join("./uploads/" + req.file.filename)),
         contentType: "image/png",
       }
-    : null; // Set to undefined when no file is uploaded
+    : null; // Set to null when no file is uploaded
 
   const user = await User.create({
     username,
     email,
-    password: hashedPassword,
+    password, // Save the password as plain text
     img: imgData,
     role: "user",
   });
@@ -48,7 +46,6 @@ const registerUser = asyncHandler(async (req, res) => {
     res.status(400);
     throw new Error("User data is not valid");
   }
-  res.json({ message: "Register the user" });
 });
 
 //@desc Login user
@@ -68,9 +65,8 @@ const loginUser = asyncHandler(async (req, res) => {
       throw new Error("Email or password is not valid");
     }
 
-    // Compare password with hashed password
-    const isPasswordMatch = await bcrypt.compare(password, user.password);
-    if (!isPasswordMatch) {
+    // Compare password with stored password
+    if (password !== user.password) {
       res.status(401);
       throw new Error("Email or password is not valid");
     }
@@ -98,14 +94,14 @@ const loginUser = asyncHandler(async (req, res) => {
       id: user.id,
       img: user.img,
       role: user.role,
-      deviceId: user.deviceId,
+      deviceId: user?.deviceId,
     };
 
     const accessToken = jwt.sign(
       {
         user: userInfo,
       },
-      process.env.ACCESS_TOKEN_SECERT,
+      process.env.ACCESS_TOKEN_SECRET,
       { expiresIn: "15m" }
     );
 
@@ -135,6 +131,7 @@ const getUsers = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
 const getAdmin = async (req, res) => {
   console.log("results");
   try {
@@ -144,6 +141,7 @@ const getAdmin = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
 //@desc Edit user data
 //@route PUT /api/users/:id
 //@access private
@@ -160,7 +158,7 @@ const editUser = asyncHandler(async (req, res) => {
 
   if (username) user.username = username;
   if (email) user.email = email;
-  if (password) user.password = await bcrypt.hash(password, 10);
+  if (password) user.password = password; // Use plain text password
   if (role) user.role = role;
   if (deviceId) user.deviceId = deviceId;
 
