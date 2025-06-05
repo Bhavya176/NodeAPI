@@ -158,7 +158,7 @@ const editUser = asyncHandler(async (req, res) => {
 
   if (username) user.username = username;
   if (email) user.email = email;
-  if (password) user.password = password; // Use plain text password
+  if (password) user.password = password;
   if (role) user.role = role;
   if (deviceId) user.deviceId = deviceId;
 
@@ -181,6 +181,27 @@ const editUser = asyncHandler(async (req, res) => {
     message: "User updated successfully",
   });
 });
+const getUserProfile = asyncHandler(async (req, res) => {
+  const userId = req.params.id; // Retrieve user ID from URL parameters
+
+  // Check if the user exists in the database
+  const user = await User.findById(userId);
+  
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
+
+  // Send the user data as response
+  res.status(200).json({
+    _id: user.id,
+    username: user.username,
+    email: user.email,
+    img: user.img,
+    role: user.role,
+    deviceId: user.deviceId,
+  });
+});
 
 module.exports = {
   registerUser,
@@ -189,4 +210,5 @@ module.exports = {
   getUsers,
   getAdmin,
   editUser,
+  getUserProfile
 };
