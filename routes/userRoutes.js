@@ -29,11 +29,11 @@ const storage = new CloudinaryStorage({
 const upload = multer({ storage });
 
 // ✅ Routes
-router.post("/register", upload.single("image"), registerUser);
+router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.get("/getAdmin", getAdmin);
 router.get("/getUser", getUsers);
-router.put("/usersID/:id", upload.single("image"), editUser);
+router.put("/usersID/:id",  editUser);
 router.get("/current", validateToken, currentUser);
 router.get("/userProfile/:id", getUserProfile);
 

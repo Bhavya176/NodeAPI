@@ -8,7 +8,8 @@ var path = require("path");
 //@route POST /api/users/register
 //@access public
 const registerUser = asyncHandler(async (req, res) => {
-  const { username, email, password } = req.body;
+  const { username, email, password, imgUrl } = req.body;
+
   if (!username || !email || !password) {
     res.status(400);
     throw new Error("All fields are mandatory!");
@@ -20,13 +21,12 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new Error("User already registered!");
   }
 
-  const imgUrl = req.file ? req.file.path : null;
-
+  // TODO: You should hash the password before saving in production!
   const user = await User.create({
     username,
     email,
-    password, // you should hash this!
-    imgUrl,
+    password,
+    imgUrl: imgUrl || null, // handle optional image URL
     role: "user",
   });
 
@@ -136,7 +136,7 @@ const getAdmin = async (req, res) => {
 //@route PUT /api/users/:id
 //@access private
 const editUser = asyncHandler(async (req, res) => {
-  const { username, email, password, role, deviceId } = req.body;
+  const { username, email, password, role, deviceId, imgUrl } = req.body;
   const userId = req.params.id;
 
   const user = await User.findById(userId);
@@ -144,12 +144,13 @@ const editUser = asyncHandler(async (req, res) => {
     res.status(404);
     throw new Error("User not found");
   }
+
   if (username) user.username = username;
   if (email) user.email = email;
   if (password) user.password = password;
   if (role) user.role = role;
   if (deviceId) user.deviceId = deviceId;
-  if (req.file) user.imgUrl = req.file.path;
+  if (imgUrl) user.imgUrl = imgUrl;
 
   const updatedUser = await user.save();
 
@@ -163,6 +164,7 @@ const editUser = asyncHandler(async (req, res) => {
     message: "User updated successfully",
   });
 });
+
 
 const getUserProfile = asyncHandler(async (req, res) => {
   const userId = req.params.id; // Retrieve user ID from URL parameters
