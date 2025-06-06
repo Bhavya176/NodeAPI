@@ -16,9 +16,8 @@ const userSchema = mongoose.Schema(
       type: String,
       required: [true, "Please add the user password"],
     },
-    img: {
-      data: Buffer,
-      contentType: String,
+    imgUrl: {
+      type: String, // Store Cloudinary URL
     },
     role: { type: String, enum: ["admin", "user"], required: true },
     deviceId: { type: String },

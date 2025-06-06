@@ -13,40 +13,30 @@ const registerUser = asyncHandler(async (req, res) => {
     res.status(400);
     throw new Error("All fields are mandatory!");
   }
-  const userAvailable = await User.findOne({ email });
-  if (userAvailable) {
+
+  const userExists = await User.findOne({ email });
+  if (userExists) {
     res.status(400);
     throw new Error("User already registered!");
   }
 
-  // Directly use the password without hashing
-  const imgData = req.file
-    ? {
-        data: fs.readFileSync(path.join("./uploads/" + req.file.filename)),
-        contentType: "image/png",
-      }
-    : null; // Set to null when no file is uploaded
+  const imgUrl = req.file ? req.file.path : null;
 
   const user = await User.create({
     username,
     email,
-    password, // Save the password as plain text
-    img: imgData,
+    password, // you should hash this!
+    imgUrl,
     role: "user",
   });
 
-  console.log(`User created ${user}`);
-  if (user) {
-    res.status(201).json({
-      _id: user.id,
-      email: user.email,
-      message: "User Registered Successfully",
-    });
-  } else {
-    res.status(400);
-    throw new Error("User data is not valid");
-  }
+  res.status(201).json({
+    _id: user.id,
+    email: user.email,
+    message: "User Registered Successfully",
+  });
 });
+
 
 //@desc Login user
 //@route POST /api/users/login
@@ -150,24 +140,16 @@ const editUser = asyncHandler(async (req, res) => {
   const userId = req.params.id;
 
   const user = await User.findById(userId);
-
   if (!user) {
     res.status(404);
     throw new Error("User not found");
   }
-
   if (username) user.username = username;
   if (email) user.email = email;
   if (password) user.password = password;
   if (role) user.role = role;
   if (deviceId) user.deviceId = deviceId;
-
-  if (req.file) {
-    user.img = {
-      data: fs.readFileSync(path.join("./uploads/" + req.file.filename)),
-      contentType: "image/png",
-    };
-  }
+  if (req.file) user.imgUrl = req.file.path;
 
   const updatedUser = await user.save();
 
@@ -175,18 +157,19 @@ const editUser = asyncHandler(async (req, res) => {
     _id: updatedUser.id,
     username: updatedUser.username,
     email: updatedUser.email,
-    img: updatedUser.img,
+    imgUrl: updatedUser.imgUrl,
     role: updatedUser.role,
     deviceId: updatedUser.deviceId,
     message: "User updated successfully",
   });
 });
+
 const getUserProfile = asyncHandler(async (req, res) => {
   const userId = req.params.id; // Retrieve user ID from URL parameters
 
   // Check if the user exists in the database
   const user = await User.findById(userId);
-  
+
   if (!user) {
     res.status(404);
     throw new Error("User not found");
@@ -197,7 +180,7 @@ const getUserProfile = asyncHandler(async (req, res) => {
     _id: user.id,
     username: user.username,
     email: user.email,
-    img: user.img,
+    imgUrl: user.imgUrl,
     role: user.role,
     deviceId: user.deviceId,
   });
@@ -210,5 +193,5 @@ module.exports = {
   getUsers,
   getAdmin,
   editUser,
-  getUserProfile
+  getUserProfile,
 };

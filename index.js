@@ -9,7 +9,13 @@ const productRoutes = require("./routes/productRoutes");
 const http = require("http");
 const app = express();
 const cors = require("cors");
-app.use(cors());
+const corsOptions = {
+  origin: "*",
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
 const stripe = require("stripe")(process.env.STRIPE_SECRET);
 connectDb();
 
@@ -17,7 +23,7 @@ const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
     origin: "*", // Update with your frontend URL
-    methods: ["GET", "POST"],
+    methods: ["GET", "POST", "PUT", "DELETE"],
   },
 });
 const port = process.env.PORT || 5000;
