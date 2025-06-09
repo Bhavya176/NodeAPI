@@ -1,8 +1,8 @@
 const asyncHandler = require("express-async-handler");
 const jwt = require("jsonwebtoken");
 const User = require("../models/userModel");
-var fs = require("fs");
-var path = require("path");
+// var fs = require("fs");
+// var path = require("path");
 
 //@desc Register a user
 //@route POST /api/users/register
@@ -36,7 +36,6 @@ const registerUser = asyncHandler(async (req, res) => {
     message: "User Registered Successfully",
   });
 });
-
 
 //@desc Login user
 //@route POST /api/users/login
@@ -92,7 +91,7 @@ const loginUser = asyncHandler(async (req, res) => {
         user: userInfo,
       },
       process.env.ACCESS_TOKEN_SECRET,
-      { expiresIn: "15m" }
+      { expiresIn: "7d" }
     );
 
     res
@@ -136,18 +135,35 @@ const getAdmin = async (req, res) => {
 //@route PUT /api/users/:id
 //@access private
 const editUser = asyncHandler(async (req, res) => {
-  const { username, email, password, role, deviceId, imgUrl } = req.body;
+  const { username, email, oldPassword, newPassword, role, deviceId, imgUrl } =
+    req.body;
+  console.log("oldPassword", oldPassword);
   const userId = req.params.id;
-
+  
   const user = await User.findById(userId);
+  console.log("user.password", user.password);
   if (!user) {
     res.status(404);
     throw new Error("User not found");
   }
+  // Check if old password is provided and valid (if the user wants to change their password)
+  if (oldPassword && newPassword) {
+    // Compare the old password with the stored one
+    if (oldPassword !== user.password) {
+      res.status(401);
+      throw new Error("Old password is incorrect");
+    }
 
+    // Check the length of the new password (you can add more checks here)
+    if (newPassword.length < 6) {
+      res.status(400);
+      throw new Error("New password must be at least 6 characters");
+    }
+
+  }
   if (username) user.username = username;
   if (email) user.email = email;
-  if (password) user.password = password;
+  if (newPassword) user.password = newPassword;
   if (role) user.role = role;
   if (deviceId) user.deviceId = deviceId;
   if (imgUrl) user.imgUrl = imgUrl;
@@ -164,7 +180,6 @@ const editUser = asyncHandler(async (req, res) => {
     message: "User updated successfully",
   });
 });
-
 
 const getUserProfile = asyncHandler(async (req, res) => {
   const userId = req.params.id; // Retrieve user ID from URL parameters

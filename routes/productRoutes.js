@@ -9,10 +9,10 @@ const {
 } = require("../controllers/productController");
 
 const router = require("express").Router();
-router.post("/", createProduct); //secure
+router.post("/", validateToken, createProduct); //secure
 router.get("/", getProducts);
 router.get("/:id", getProductById);
-router.put("/:id", updateProductById); //secure
-router.delete("/:id", deleteById); //secure
+router.put("/:id", validateToken, updateProductById); //secure
+router.delete("/:id", validateToken, deleteById); //secure
 
 module.exports = router;
