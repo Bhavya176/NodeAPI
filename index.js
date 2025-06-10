@@ -123,38 +123,112 @@ app.get("/messages/:userId", async (req, res) => {
   }
 });
 
-io.on("connection", (socket) => {
-  console.log("A user connected");
+// io.on("connection", (socket) => {
+//   console.log("A user connected");
 
-  // Send previous messages to the client
-  socket.on("load messages", async (userId) => {
-    try {
-      const messages = await UserMessage.find({
-        $or: [{ sender: userId }, { receiver: userId }],
-      }).populate("sender receiver");
-      socket.emit("load messages", messages);
-    } catch (err) {
-      console.error(err);
-    }
-  });
+//   // Send previous messages to the client
+//   socket.on("load messages", async (userId) => {
+//     try {
+//       const messages = await UserMessage.find({
+//         $or: [{ sender: userId }, { receiver: userId }],
+//       }).populate("sender receiver");
+//       socket.emit("load messages", messages);
+//     } catch (err) {
+//       console.error(err);
+//     }
+//   });
 
-  // Listen for new messages from the client
-  socket.on("send message", async (data) => {
-    const { sender, receiver, content } = data;
-    const newMessage = new UserMessage({ sender, receiver, content });
-    try {
-      await newMessage.save();
-      io.emit("receive message", { sender, receiver, content });
-    } catch (err) {
-      console.error(err);
-    }
-  });
+//   // Listen for new messages from the client
+//   socket.on("send message", async (data) => {
+//     const { sender, receiver, content } = data;
+//     const newMessage = new UserMessage({ sender, receiver, content });
+//     try {
+//       await newMessage.save();
+//       io.emit("receive message", { sender, receiver, content });
+//     } catch (err) {
+//       console.error(err);
+//     }
+//   });
 
-  // Handle disconnection
-  socket.on("disconnect", () => {
-    console.log("User disconnected");
-  });
-});
+//   // Handle disconnection
+//   socket.on("disconnect", () => {
+//     console.log("User disconnected");
+//   });
+// });
+// io.on("connection", (socket) => {
+//   console.log("A user connected:", socket.id);
+
+//   // Send socket ID to client
+//   socket.emit("socketId", socket.id);
+
+//   // Load chat messages for user
+//   socket.on("load messages", async (userId) => {
+//     try {
+//       const messages = await UserMessage.find({
+//         $or: [{ sender: userId }, { receiver: userId }],
+//       }).populate("sender receiver");
+//       socket.emit("load messages", messages);
+//     } catch (err) {
+//       console.error(err);
+//     }
+//   });
+
+//   // Receive and broadcast new chat message
+//   socket.on("send message", async (data) => {
+//     const { sender, receiver, content } = data;
+//     const newMessage = new UserMessage({ sender, receiver, content });
+//     try {
+//       await newMessage.save();
+//       io.emit("receive message", { sender, receiver, content });
+//     } catch (err) {
+//       console.error(err);
+//     }
+//   });
+
+//   // Video Call: Initiate call
+//   socket.on("initiateCall", ({ targetId, signalData, senderId, senderName }) => {
+//     io.to(targetId).emit("incomingCall", {
+//       signal: signalData,
+//       from: senderId,
+//       name: senderName,
+//     });
+//   });
+
+//   // Video Call: Answer call
+//   socket.on("answerCall", (data) => {
+//     socket.broadcast.emit("mediaStatusChanged", {
+//       mediaType: data.mediaType,
+//       isActive: data.mediaStatus,
+//     });
+//     io.to(data.to).emit("callAnswered", data);
+//   });
+
+//   // Video Call: Terminate call
+//   socket.on("terminateCall", ({ targetId }) => {
+//     io.to(targetId).emit("callTerminated");
+//   });
+
+//   // Video Call: Media status change (mute/unmute, camera on/off)
+//   socket.on("changeMediaStatus", ({ mediaType, isActive }) => {
+//     socket.broadcast.emit("mediaStatusChanged", {
+//       mediaType,
+//       isActive,
+//     });
+//   });
+
+//   // Video Call: Chat messages within call
+//   socket.on("sendMessage", ({ targetId, message, senderName }) => {
+//     io.to(targetId).emit("receiveMessage", { message, senderName });
+//   });
+
+//   // Disconnection
+//   socket.on("disconnect", () => {
+//     console.log("User disconnected:", socket.id);
+//   });
+// });
+
+
+
 io.on("connection", (socket) => {
   console.log("A user connected:", socket.id);
 
@@ -216,12 +290,12 @@ io.on("connection", (socket) => {
     });
   });
 
-  // Video Call: Chat messages within call
+  // Video Call: In-call messaging
   socket.on("sendMessage", ({ targetId, message, senderName }) => {
     io.to(targetId).emit("receiveMessage", { message, senderName });
   });
 
-  // Disconnection
+  // Handle disconnection
   socket.on("disconnect", () => {
     console.log("User disconnected:", socket.id);
   });
