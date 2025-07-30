@@ -98,6 +98,49 @@ app.post("/api/create-checkout-session", async (req, res) => {
 
   res.json({ id: session.id });
 });
+// Add this new route or update the existing "/payment-sheet"
+app.post("/payment-sheet", async (req, res) => {
+  try {
+    const { amount, email } = req.body; // Accept email for customer identification
+    console.log("Received request for /payment-sheet", { amount, email });
+
+    // Check if customer exists or create a new one
+    const customers = await stripe.customers.list({ email });
+    console.log("Fetched customers", customers.data);
+
+    const customer =
+      customers.data.length > 0
+        ? customers.data[0]
+        : await stripe.customers.create({ email });
+    console.log("Using customer", customer);
+
+    // Create ephemeral key for the mobile client
+    const ephemeralKey = await stripe.ephemeralKeys.create(
+      { customer: customer.id },
+      { apiVersion: "2025-06-30" } // Update if needed
+    );
+    console.log("Created ephemeral key", ephemeralKey);
+
+    // Create a PaymentIntent
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amount,
+      currency: "usd",
+      customer: customer.id,
+      automatic_payment_methods: { enabled: true },
+    });
+    console.log("Created payment intent", paymentIntent);
+
+    res.status(200).json({
+      paymentIntent: paymentIntent.client_secret,
+      ephemeralKey: ephemeralKey.secret,
+      customer: customer.id,
+      publishableKey: process.env.STRIPE_PUBLICKEY,
+    });
+  } catch (error) {
+    console.error("Payment Sheet error:", error);
+    res.status(500).json({ error: "Failed to initialize payment sheet." });
+  }
+});
 
 // Message routes
 app.post("/messages", async (req, res) => {
@@ -227,8 +270,6 @@ app.get("/messages/:userId", async (req, res) => {
 //   });
 // });
 
-
-
 io.on("connection", (socket) => {
   console.log("A user connected:", socket.id);
 
@@ -260,13 +301,16 @@ io.on("connection", (socket) => {
   });
 
   // Video Call: Initiate call
-  socket.on("initiateCall", ({ targetId, signalData, senderId, senderName }) => {
-    io.to(targetId).emit("incomingCall", {
-      signal: signalData,
-      from: senderId,
-      name: senderName,
-    });
-  });
+  socket.on(
+    "initiateCall",
+    ({ targetId, signalData, senderId, senderName }) => {
+      io.to(targetId).emit("incomingCall", {
+        signal: signalData,
+        from: senderId,
+        name: senderName,
+      });
+    }
+  );
 
   // Video Call: Answer call
   socket.on("answerCall", (data) => {
