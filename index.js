@@ -117,7 +117,7 @@ app.post("/payment-sheet", async (req, res) => {
     // Create ephemeral key for the mobile client
     const ephemeralKey = await stripe.ephemeralKeys.create(
       { customer: customer.id },
-      { apiVersion: "2025-06-30" } // Update if needed
+      { apiVersion: "2023-10-16" } // Update if needed
     );
     console.log("Created ephemeral key", ephemeralKey);
 
