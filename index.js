@@ -6,15 +6,17 @@ const Message = require("./models/messageModel");
 const UserMessage = require("./models/userMessageModel");
 const socketIo = require("socket.io");
 const productRoutes = require("./routes/productRoutes");
+const agentRoutes = require("./routes/agentRoutes");
 const http = require("http");
-const app = express();
+
 const cors = require("cors");
 const corsOptions = {
   origin: "*",
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true,
 };
-
+const app = express();
+app.use(express.json());
 app.use(cors(corsOptions));
 const stripe = require("stripe")(process.env.STRIPE_SECRET);
 connectDb();
@@ -31,7 +33,7 @@ app.get("/", (req, res) => {
   res.send("products api running new deploy");
   // res.render("home");
 });
-
+app.use("/agent", agentRoutes);
 app.get("/about", (req, res) => {
   res.send("products api running new deploy");
 });
@@ -45,12 +47,11 @@ app.delete("/delete-all-chats", async (req, res) => {
     res.status(500).json({ message: "Failed to delete chats." });
   }
 });
-app.use(express.json());
+
 app.use("/products", productRoutes);
 app.use("/contacts", require("./routes/contactRoutes"));
 app.use("/users", require("./routes/userRoutes"));
 app.use(errorHandler);
-
 app.post("/api/create-checkout-session", async (req, res) => {
   const { products, customer } = req.body;
   const lineItems = products.map((product) => ({
