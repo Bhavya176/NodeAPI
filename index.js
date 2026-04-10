@@ -1,6 +1,7 @@
 const express = require("express");
 const connectDb = require("./config/dbConnection");
 const errorHandler = require("./middleware/errorHandler");
+const validateToken = require("./middleware/validateTokenHandler");
 const dotenv = require("dotenv").config();
 const Message = require("./models/messageModel");
 const UserMessage = require("./models/userMessageModel");
@@ -25,10 +26,16 @@ const ALLOWED_ORIGIN = "https://universalcart.vercel.app";
 // 🔒 GLOBAL ORIGIN VALIDATION MIDDLEWARE
 // Blocks all unknown origins before hitting routes
 // =============================================
+const ALLOWED_ORIGINS = [
+  ALLOWED_ORIGIN,
+  "http://localhost:3000",
+  "http://localhost:5555",
+];
+
 app.use((req, res, next) => {
   const origin = req.headers.origin;
 
-  if (!origin || origin === ALLOWED_ORIGIN) {
+  if (!origin || ALLOWED_ORIGINS.includes(origin)) {
     return next(); // allow server-to-server & allowed site
   }
 
@@ -40,12 +47,11 @@ app.use((req, res, next) => {
 // =============================================
 app.use(
   cors({
-    origin: ALLOWED_ORIGIN,
+    origin: ALLOWED_ORIGINS,
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
-  })
+  }),
 );
-
 const server = http.createServer(app);
 
 // =============================================
@@ -156,7 +162,7 @@ app.post("/payment-sheet", async (req, res) => {
 
     const ephemeralKey = await stripe.ephemeralKeys.create(
       { customer: customer.id },
-      { apiVersion: "2023-10-16" }
+      { apiVersion: "2023-10-16" },
     );
 
     const paymentIntent = await stripe.paymentIntents.create({
@@ -206,11 +212,32 @@ app.get("/messages/:userId", async (req, res) => {
 });
 
 // =============================================
-// 🚀 CHATGPT / OPENROUTER API (Protected)
+// 🚀 CHATGPT / OPENROUTER API (Public)
 // =============================================
 app.post("/api/chat", async (req, res) => {
   try {
     const { model, messages } = req.body;
+
+    // Validate required fields
+    if (!model || !messages) {
+      return res.status(400).json({
+        error: "Missing required fields: model and messages",
+      });
+    }
+
+    if (!process.env.OPENROUTER_API_KEY) {
+      console.error(
+        "❌ OPENROUTER_API_KEY is not set in environment variables",
+      );
+      return res.status(500).json({
+        error: "Server configuration error: API key missing",
+      });
+    }
+
+    console.log("📤 Sending request to OpenRouter:", {
+      model,
+      messageCount: messages.length,
+    });
 
     const response = await fetch(
       "https://openrouter.ai/api/v1/chat/completions",
@@ -219,16 +246,32 @@ app.post("/api/chat", async (req, res) => {
         headers: {
           Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
           "Content-Type": "application/json",
+          "HTTP-Referer": "https://universalcart.vercel.app",
+          "X-Title": "UniversalCart",
         },
         body: JSON.stringify({ model, messages }),
-      }
+      },
     );
 
     const data = await response.json();
+
+    // Log response for debugging
+    if (!response.ok) {
+      console.error("❌ OpenRouter API Error:", {
+        status: response.status,
+        error: data,
+      });
+      return res.status(response.status || 500).json(data);
+    }
+
+    console.log("✅ OpenRouter API Response successful");
     res.json(data);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Something went wrong" });
+    console.error("❌ Chat API Error:", error);
+    res.status(500).json({
+      error: "Something went wrong",
+      details: error.message,
+    });
   }
 });
 
@@ -270,7 +313,7 @@ io.on("connection", (socket) => {
         from: senderId,
         name: senderName,
       });
-    }
+    },
   );
 
   socket.on("answerCall", (data) => {
